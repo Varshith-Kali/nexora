@@ -67,11 +67,34 @@ No trusted intermediary. No manual arbitration. The AI advises; the policy engin
 
 ---
 
-## Live Contracts (Monad Testnet)
+## 🔗 Verify It On-Chain
+
+Everything is fully verifiable on Monad Testnet. No trust required.
+
+### 👤 Buyer Wallet — Real Transactions, Real MON
+
+> **[`0x7Ac59E62656CA555009900BD85dfA3a225cb8653`](https://testnet.monadscan.com/address/0x7Ac59E62656CA555009900BD85dfA3a225cb8653)**
+
+This is the buyer account that signs `openJob()` and locks real MON into escrow on every demo run.
+Every job creation, every escrow lock, every refund credited back — all live on Monadscan.
+
+[![View Buyer on Monadscan](https://img.shields.io/badge/Monadscan-View%20Buyer%20Address-836ef9?style=flat-square)](https://testnet.monadscan.com/address/0x7Ac59E62656CA555009900BD85dfA3a225cb8653)
+
+---
+
+## 📜 Live Contracts (Monad Testnet)
+
+### NexoraEscrow — The Trust Engine
+
+> **[`0x16041C31040049a185B66D28dcBdaA6CA55682E9`](https://testnet.monadscan.com/address/0x16041C31040049a185B66D28dcBdaA6CA55682E9)**
+
+All escrow operations happen here — `openJob`, `submitWork`, `settle`. Every MON locked, released, or refunded is an on-chain transaction verifiable by anyone.
+
+[![View Escrow on Monadscan](https://img.shields.io/badge/Monadscan-View%20Escrow%20Contract-6366f1?style=flat-square)](https://testnet.monadscan.com/address/0x16041C31040049a185B66D28dcBdaA6CA55682E9)
 
 | Contract | Address |
 |---|---|
-| NexoraEscrow | [`0x16041c31040049a185b66d28dcbdaa6ca55682e9`](https://testnet.monadscan.com/address/0x16041c31040049a185b66d28dcbdaa6ca55682e9) |
+| NexoraEscrow | [`0x16041C31040049a185B66D28dcBdaA6CA55682E9`](https://testnet.monadscan.com/address/0x16041C31040049a185B66D28dcBdaA6CA55682E9) |
 | NexoraRegistry | [`0x1a09a10fbff81eb2de565fdda79bb944f3523467`](https://testnet.monadscan.com/address/0x1a09a10fbff81eb2de565fdda79bb944f3523467) |
 | Chain | Monad Testnet (chainId 10143) |
 
