@@ -8,10 +8,10 @@
 import { z } from "zod";
 
 export const CRITERIA_WEIGHTS = {
-  "Requirement completeness": 30,
-  "Acceptance criteria": 25,
-  "Evidence quality": 20,
-  "Correctness and consistency": 15,
+  "Tracking accuracy": 30,
+  "Timeline completeness": 25,
+  "Evidence and traceability": 20,
+  "Status correctness": 15,
   "Security and manipulation": 10,
 } as const;
 

@@ -67,33 +67,33 @@ export default function NexoraDashboard() {
             transition={{ duration: 0.5 }}
             className="mx-auto max-w-3xl text-center text-3xl font-semibold leading-tight tracking-tight sm:text-4xl"
           >
-            Verify the work.{" "}
+            Did the AI agent do the job?{" "}
             <span className="bg-gradient-to-r from-[#A78BFA] to-[#836EF9] bg-clip-text text-transparent">
-              Then settle.
+              Gemini verifies first.
             </span>
           </motion.h1>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-white/55">
-            AI agents can transact. Nexora verifies the work before escrow is
-            released — Gemini evaluates the submission against explicit
-            requirements, a deterministic policy engine decides, and Monad
-            settles. <span className="text-white/75">Gemini never controls funds.</span>
+            You hire an AI agent to track your package. The agent submits a report. Before
+            any money moves, Gemini reads the report and checks it against your requirements.
+            Accurate report → seller gets paid. Fake or manipulated report → you get refunded.{" "}
+            <span className="text-white/75">All verified on Monad.</span>
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <HeroCard
               icon={<FileSearch className="h-4 w-4 text-[#A78BFA]" />}
               title="WHAT"
-              body="AI-verified escrow for agent-to-agent work."
+              body="AI-verified escrow for agent work. Send as little as 0.004 MON — only released when the work is real."
             />
             <HeroCard
               icon={<ShieldCheck className="h-4 w-4 text-[#F43F5E]" />}
               title="WHY"
-              body="Agents should not get paid automatically for incorrect, incomplete or manipulated work."
+              body="Agents shouldn't get paid for fake, fabricated, or manipulated work — even if they inject instructions into their own report."
             />
             <HeroCard
               icon={<Scale className="h-4 w-4 text-[#10B981]" />}
               title="HOW"
-              body="Gemini verifies against requirements → the policy engine authorizes → Monad settles the escrow."
+              body="Gemini reads the tracking report → policy engine scores it → Monad settles the escrow. Live demo below."
             />
           </div>
 
@@ -138,17 +138,17 @@ export default function NexoraDashboard() {
         <footer className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-5 text-[11px] text-white/30">
           <span>
             Nexora — escrow on Monad Testnet · AI verification by Gemini ·
-            deterministic policy gate
+            package tracking demo · min 0.004 MON
           </span>
           <span className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1">
               <Lock className="h-3 w-3" /> hash-on-chain, content off-chain
             </span>
             <span className="inline-flex items-center gap-1">
-              <Sparkles className="h-3 w-3" /> one AI call per verification
+              <Sparkles className="h-3 w-3" /> one Gemini call per verification
             </span>
             <span className="inline-flex items-center gap-1">
-              <Coins className="h-3 w-3" /> 3 tx per demo path
+              <Coins className="h-3 w-3" /> 3 on-chain tx per demo path
             </span>
           </span>
         </footer>

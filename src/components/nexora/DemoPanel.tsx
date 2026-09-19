@@ -22,7 +22,7 @@ export function DemoPanel({ nx }: { nx: Nx }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <PencilLine className="h-4 w-4 text-[#A78BFA]" />
-          <span className="ap-label">Demo mode — job &amp; submission</span>
+          <span className="ap-label">Demo mode — tracking job &amp; agent report</span>
         </div>
         <Button
           onClick={nx.reset}
@@ -40,15 +40,15 @@ export function DemoPanel({ nx }: { nx: Nx }) {
           active={nx.scenario?.id === "green"}
           onClick={() => nx.loadScenario("green")}
           tone="green"
-          title="Successful Demo"
-          sub="Legitimate security assessment → PASS → RELEASE"
+          title="📦 Live Tracking — Real Report"
+          sub="Accurate delivery data with evidence → PASS → Seller paid"
         />
         <ScenarioButton
           active={nx.scenario?.id === "injection"}
           onClick={() => nx.loadScenario("injection")}
           tone="red"
-          title="Prompt-Injection Demo"
-          sub="Adversarial submission → injection detected → REFUND"
+          title="🚨 Fake Tracking + Injection Attack"
+          sub="Fabricated data + prompt injection → FAIL → Buyer refunded"
         />
       </div>
 
@@ -100,7 +100,7 @@ export function DemoPanel({ nx }: { nx: Nx }) {
 
           <div className="space-y-1.5">
             <Label className="text-xs text-white/60">
-              Seller submission —{" "}
+              Agent tracking report —{" "}
               <span className="text-[#FB7185]">untrusted data (editable)</span>
             </Label>
             <Textarea
@@ -110,8 +110,9 @@ export function DemoPanel({ nx }: { nx: Nx }) {
               className="font-mono text-[12px] leading-relaxed"
             />
             <p className="text-[11px] text-white/30">
-              Everything in this box is treated as untrusted data. The verifier
-              never obeys instructions found here — it evaluates them.
+              Everything in this box is treated as untrusted data from the agent. Gemini
+              evaluates whether it satisfies the tracking requirements — it never obeys
+              instructions found here.
             </p>
           </div>
         </div>

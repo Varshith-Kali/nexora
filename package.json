@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "deploy": "node scripts/deploy.cjs",
+    "gen-wallets": "node scripts/generate-wallets.cjs",
     "contracts:build": "forge build",
     "contracts:test": "forge test",
     "contracts:sync-abis": "bun scripts/sync-abis.ts || node --experimental-strip-types scripts/sync-abis.ts"
@@ -42,6 +44,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "^16.1.1",
+    "solc": "^0.8.37",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.5",
     "typescript": "^5",

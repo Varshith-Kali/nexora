@@ -43,10 +43,10 @@ type Nx = ReturnType<typeof useNexora>;
 
 // ── Weights must match schema.ts exactly ──────────────────────────────────────
 const CRITERIA_WEIGHTS: Record<string, number> = {
-  "Requirement completeness": 30,
-  "Acceptance criteria": 25,
-  "Evidence quality": 20,
-  "Correctness and consistency": 15,
+  "Tracking accuracy": 30,
+  "Timeline completeness": 25,
+  "Evidence and traceability": 20,
+  "Status correctness": 15,
   "Security and manipulation": 10,
 };
 
