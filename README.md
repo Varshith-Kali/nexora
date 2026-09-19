@@ -71,14 +71,23 @@ No trusted intermediary. No manual arbitration. The AI advises; the policy engin
 
 Everything is fully verifiable on Monad Testnet. No trust required.
 
-### 👤 Buyer Wallet — Real Transactions, Real MON
+### 👤 Buyer Agent — Real Transactions, Real MON
 
 > **[`0x7Ac59E62656CA555009900BD85dfA3a225cb8653`](https://testnet.monadscan.com/address/0x7Ac59E62656CA555009900BD85dfA3a225cb8653)**
 
-This is the buyer account that signs `openJob()` and locks real MON into escrow on every demo run.
-Every job creation, every escrow lock, every refund credited back — all live on Monadscan.
+The buyer connects MetaMask, signs `openJob()`, and locks real MON into the escrow contract on every demo run. Every job creation, every escrow lock, every refund credited back — all live and verifiable on Monadscan.
 
-[![View Buyer on Monadscan](https://img.shields.io/badge/Monadscan-View%20Buyer%20Address-836ef9?style=flat-square)](https://testnet.monadscan.com/address/0x7Ac59E62656CA555009900BD85dfA3a225cb8653)
+[![View Buyer on Monadscan](https://img.shields.io/badge/Monadscan-View%20Buyer%20Agent-836ef9?style=flat-square)](https://testnet.monadscan.com/address/0x7Ac59E62656CA555009900BD85dfA3a225cb8653)
+
+---
+
+### 🤖 Seller Agent — Server-Side, Fully On-Chain
+
+> **[`0x04Afc4Bd311F522cAed7951C28096846D7FE6209`](https://testnet.monadscan.com/address/0x04Afc4Bd311F522cAed7951C28096846D7FE6209)**
+
+The seller agent runs server-side (no MetaMask needed). It signs `submitWork()` to commit the tracking report hash on-chain, and receives MON directly to this address when Gemini approves the work. Check "Internal Transactions" on Monadscan to see incoming payments.
+
+[![View Seller on Monadscan](https://img.shields.io/badge/Monadscan-View%20Seller%20Agent-22c55e?style=flat-square)](https://testnet.monadscan.com/address/0x04Afc4Bd311F522cAed7951C28096846D7FE6209)
 
 ---
 
