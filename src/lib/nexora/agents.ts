@@ -167,7 +167,7 @@ export async function submitWorkOnChain(params: {
   const result = await sendAndAwait(account, {
     to: escrow as `0x${string}`,
     data: encodeSubmitWork(params.jobId, params.hash),
-    gas: 120_000n,
+    gas: 250_000n,
   });
   return { ...result, explorerUrl: explorerTx(result.txHash) };
 }
@@ -184,7 +184,7 @@ export async function settleOnChain(params: {
   const result = await sendAndAwait(account, {
     to: escrow as `0x${string}`,
     data: encodeSettle(params.jobId, params.approved),
-    gas: 120_000n,
+    gas: 350_000n,
   });
   return { ...result, explorerUrl: explorerTx(result.txHash) };
 }
