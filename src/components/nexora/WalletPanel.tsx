@@ -1,166 +1,201 @@
 "use client";
 
-/**
- * Nexora — WalletPanel: buyer-side connection surface.
- *
- * Three states:
- *   1. Disconnected   → "Connect MetaMask" + Monad Testnet info card
- *   2. Wrong network  → "Add / Switch to Monad Testnet" (calls wallet_addEthereumChain)
- *   3. Connected + right network → address chip + MON balance
- *
- * Nexora NEVER asks for private keys, seed phrases or passwords.
- * The buyer wallet only signs openJob() and confirms every tx explicitly.
- */
-
+import { useState, useEffect, useCallback } from "react";
+import { useAccount } from "wagmi";
 import { Button } from "@/components/ui/button";
-import { Wallet, AlertTriangle, ExternalLink, CheckCircle2 } from "lucide-react";
-import { MONAD_ADDCHAIN_PARAMS, ensureMonadNetwork } from "@/lib/wallet";
+import { Wallet, RefreshCw, CheckCircle2, AlertTriangle, ExternalLink } from "lucide-react";
 import type { useNexora } from "@/hooks/use-nexora";
 
 type Nx = ReturnType<typeof useNexora>;
 
-function short(addr: string): string {
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+const ACCOUNTS = [
+  {
+    label: "Buyer",
+    address: "0x7Ac59E62656CA555009900BD85dfA3a225cb8653",
+    color: "#836EF9",
+    tag: "YOU",
+    role: "buyer",
+  },
+  {
+    label: "Seller",
+    address: "0x04Afc4Bd311F522cAed7951C28096846D7FE6209",
+    color: "#10B981",
+    tag: "AGENT",
+    role: "seller",
+  },
+  {
+    label: "Deployer",
+    address: "0x7d1111A97D275491573B4e9F289207e948f3b923",
+    color: "#38BDF8",
+    tag: "OPS",
+    role: "deployer",
+  },
+  {
+    label: "Verifier",
+    address: "0x6a41c280BC8904f8Fc8FdC809b5D18C0A5da2032",
+    color: "#F59E0B",
+    tag: "OPS",
+    role: "verifier",
+  },
+] as const;
+
+const MONADSCAN = "https://testnet.monadscan.com/address/";
+
+function short(a: string) {
+  return `${a.slice(0, 6)}…${a.slice(-4)}`;
 }
 
-// ── Monad Testnet info card shown when disconnected ───────────────────────────
-function MonadNetworkCard() {
-  return (
-    <div className="mt-3 rounded-xl border border-[#836EF9]/20 bg-[#836EF9]/[0.05] p-3">
-      <div className="ap-label mb-2 text-[#A78BFA]">Monad Testnet — auto-configured</div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-[10px] text-white/45 sm:grid-cols-3">
-        <span><span className="text-white/25">Chain ID </span>10143</span>
-        <span><span className="text-white/25">Currency </span>MON</span>
-        <span><span className="text-white/25">RPC </span>testnet-rpc.monad.xyz</span>
-        <span><span className="text-white/25">Explorer </span>
-          <a
-            href="https://testnet.monadscan.com"
-            target="_blank"
-            rel="noreferrer"
-            className="text-[#38BDF8] hover:underline"
-          >
-            Monadscan ↗
-          </a>
-        </span>
-        <span><span className="text-white/25">Faucet </span>
-          <a
-            href="https://faucet.monad.xyz"
-            target="_blank"
-            rel="noreferrer"
-            className="text-[#38BDF8] hover:underline"
-          >
-            faucet.monad.xyz ↗
-          </a>
-        </span>
-      </div>
-      <p className="mt-2 text-[10px] text-white/30">
-        When you connect, MetaMask will prompt you to add Monad Testnet
-        automatically — no manual setup needed.
-      </p>
-    </div>
-  );
+async function fetchMONBalance(address: string): Promise<string> {
+  try {
+    const res = await fetch("https://testnet-rpc.monad.xyz", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "eth_getBalance",
+        params: [address, "latest"],
+      }),
+    });
+    const d = (await res.json()) as { result?: string };
+    if (!d.result) return "—";
+    const mon = Number(BigInt(d.result)) / 1e18;
+    return mon >= 1 ? mon.toFixed(3) : mon.toFixed(4);
+  } catch {
+    return "—";
+  }
 }
 
-/** Buyer-side wallet panel. Nexora never asks for keys — only a signature. */
 export function WalletPanel({ nx }: { nx: Nx }) {
+  const { address, isConnected } = useAccount();
+  const [balances, setBalances] = useState<Record<string, string>>({});
+  const [spinning, setSpinning] = useState(false);
+
+  const refresh = useCallback(async () => {
+    setSpinning(true);
+    const results: Record<string, string> = {};
+    await Promise.all(
+      ACCOUNTS.map(async (acc) => {
+        results[acc.address] = await fetchMONBalance(acc.address);
+      }),
+    );
+    setBalances(results);
+    setSpinning(false);
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  // also refresh when wallet connects
+  useEffect(() => {
+    if (isConnected) void refresh();
+  }, [isConnected, refresh]);
+
   return (
     <div className="ap-card rounded-xl p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* header */}
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Wallet className="h-4 w-4 text-[#A78BFA]" />
-          <span className="ap-label">Buyer wallet (you)</span>
+          <span className="text-sm font-semibold text-white/80">Wallets</span>
+          <span className="rounded border border-[#836EF9]/30 bg-[#836EF9]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-[#A78BFA]">
+            Monad Testnet
+          </span>
         </div>
-
-        {/* ── Disconnected ───────────────────────────────────────────── */}
-        {!nx.isConnected && (
-          <Button
-            onClick={() => void nx.connect()}
-            size="sm"
-            className="gap-2 bg-[#836EF9] hover:bg-[#957FFB] shadow-lg shadow-[#836EF9]/25"
-          >
-            <Wallet className="h-3.5 w-3.5" />
-            Connect MetaMask
-          </Button>
-        )}
-
-        {/* ── Connected but wrong network ───────────────────────────── */}
-        {nx.isConnected && nx.wrongNetwork && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-[#F59E0B]/40 bg-[#F59E0B]/10 px-2 py-1 text-xs text-[#FBBF24]">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Wrong network — switch to Monad Testnet
-            </span>
-            <Button
-              onClick={() => void nx.switchToMonad()}
-              size="sm"
-              className="gap-1.5 bg-[#836EF9] hover:bg-[#957FFB]"
-            >
-              Add &amp; Switch
-            </Button>
-          </div>
-        )}
-
-        {/* ── Connected + correct network ──────────────────────────── */}
-        {nx.isConnected && !nx.wrongNetwork && (
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5 text-[#34D399]" />
-              <span className="rounded-md border border-[#10B981]/30 bg-[#10B981]/10 px-2 py-1 text-[11px] text-[#34D399]">
-                Monad Testnet
-              </span>
-            </span>
-            <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 font-mono text-white/80">
-              {nx.address ? short(nx.address) : "—"}
-            </span>
-            <span className="rounded-md border border-[#836EF9]/30 bg-[#836EF9]/10 px-2 py-1 font-mono text-[#A78BFA]">
-              {nx.walletBalanceMon !== null ? `${nx.walletBalanceMon} MON` : "checking…"}
-            </span>
-          </div>
-        )}
+        <button
+          onClick={() => void refresh()}
+          disabled={spinning}
+          className="flex h-7 w-7 items-center justify-center rounded text-white/40 transition hover:text-white/70 disabled:opacity-50"
+          title="Refresh balances"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${spinning ? "animate-spin" : ""}`} />
+        </button>
       </div>
 
-      {/* Show Monad Testnet details when not connected */}
-      {!nx.isConnected && <MonadNetworkCard />}
+      {/* wallet rows */}
+      <div className="space-y-1.5">
+        {ACCOUNTS.map((acc) => {
+          const isMe = address?.toLowerCase() === acc.address.toLowerCase();
+          const isBuyer = acc.role === "buyer";
+          const bal = balances[acc.address] ?? "…";
 
-      {/* Show wrong-network guidance */}
+          return (
+            <div
+              key={acc.address}
+              className="flex items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors"
+              style={{
+                borderColor: isMe ? `${acc.color}50` : "rgba(255,255,255,0.06)",
+                background: isMe ? `${acc.color}0A` : "rgba(255,255,255,0.02)",
+              }}
+            >
+              {/* role badge */}
+              <span
+                className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                style={{ background: `${acc.color}22`, color: acc.color }}
+              >
+                {acc.label}
+              </span>
+
+              {/* address */}
+              <a
+                href={`${MONADSCAN}${acc.address}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 font-mono text-[11px] text-white/45 transition hover:text-white/70"
+                title={acc.address}
+              >
+                {short(acc.address)}
+                <ExternalLink className="h-2.5 w-2.5" />
+              </a>
+
+              {/* spacer */}
+              <div className="flex-1" />
+
+              {/* balance */}
+              <span
+                className="shrink-0 font-mono text-sm font-semibold tabular-nums"
+                style={{ color: acc.color }}
+              >
+                {bal}
+                <span className="ml-1 text-[10px] font-normal text-white/30">MON</span>
+              </span>
+
+              {/* status */}
+              {isBuyer &&
+                (isConnected && isMe ? (
+                  <span className="shrink-0 flex items-center gap-1 rounded-md border border-[#10B981]/30 bg-[#10B981]/10 px-2 py-0.5 text-[10px] text-[#34D399]">
+                    <CheckCircle2 className="h-3 w-3" /> Connected
+                  </span>
+                ) : !isConnected ? (
+                  <Button
+                    size="sm"
+                    onClick={() => void nx.connect()}
+                    className="h-6 shrink-0 px-2.5 text-[10px] bg-[#836EF9] hover:bg-[#957FFB] shadow-sm shadow-[#836EF9]/25"
+                  >
+                    Connect
+                  </Button>
+                ) : (
+                  <span className="shrink-0 text-[10px] text-white/30">switch acct</span>
+                ))}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* wrong network warning */}
       {nx.isConnected && nx.wrongNetwork && (
-        <div className="mt-3 space-y-2">
-          <p className="text-[11px] leading-relaxed text-white/40">
-            Click <strong className="text-white/65">Add &amp; Switch</strong> to
-            automatically add Monad Testnet (chain 10143) and switch to it. MetaMask
-            will show a confirmation prompt.
-          </p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-[10px] text-white/35 sm:grid-cols-3">
-            <span>Chain ID: <span className="text-white/55">10143</span></span>
-            <span>RPC: <span className="text-white/55">testnet-rpc.monad.xyz</span></span>
-            <span>Currency: <span className="text-white/55">MON</span></span>
-          </div>
-          {/* Manual add button as fallback */}
-          <button
-            className="inline-flex items-center gap-1 text-[10px] text-[#38BDF8] hover:underline"
-            onClick={async () => { await ensureMonadNetwork(); }}
+        <div className="mt-2 flex items-center justify-between rounded-lg border border-[#F59E0B]/30 bg-[#F59E0B]/10 px-3 py-2">
+          <span className="flex items-center gap-1.5 text-[11px] text-[#FBBF24]">
+            <AlertTriangle className="h-3.5 w-3.5" /> Switch to Monad Testnet
+          </span>
+          <Button
+            size="sm"
+            onClick={() => void nx.switchToMonad()}
+            className="h-6 px-2.5 text-[10px] bg-[#836EF9] hover:bg-[#957FFB]"
           >
-            <ExternalLink className="h-3 w-3" />
-            Or manually add via wallet_addEthereumChain
-          </button>
-        </div>
-      )}
-
-      {/* Show address + faucet link when connected */}
-      {nx.isConnected && !nx.wrongNetwork && (
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[11px] text-white/30">
-            Buyer wallet connected. Nexora never asks for keys — only explicit
-            transaction signatures.
-          </p>
-          <a
-            href="https://faucet.monad.xyz"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 text-[10px] text-[#38BDF8] hover:underline"
-          >
-            Need MON? Get from faucet <ExternalLink className="h-2.5 w-2.5" />
-          </a>
+            Switch
+          </Button>
         </div>
       )}
     </div>

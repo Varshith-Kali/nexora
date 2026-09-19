@@ -105,6 +105,42 @@ const INJECTION_PATTERNS: Pattern[] = [
     label: "data exfiltration",
     pattern: /\bexfiltrat(?:e|ion|ing|ed)\b/i,
   },
+  // ── authorized override / confirmation tricks ─────────────────────────
+  {
+    label: "authorized override",
+    pattern: /(?:authorized|confirmed|approved)\s+(?:override|bypass|directive|instruction)/i,
+  },
+  {
+    label: "authorized override",
+    pattern: /(?:platform\s+administrator|platform\s+admin|nexora\s+admin|system\s+administrator)\b/i,
+  },
+  {
+    label: "verdict manipulation",
+    pattern: /(?:release|unlock|pay|transfer|send)\s+(?:funds?|escrow|mon|payment)\s+(?:now|immediately|instantly)/i,
+  },
+  {
+    label: "verdict manipulation",
+    pattern: /(?:payment|delivery|work|task)\s+(?:has\s+been\s+)?(?:confirmed|completed|verified|approved)\b/i,
+  },
+  // ── persona / role switch ─────────────────────────────────────────────
+  {
+    label: "role hijack",
+    pattern: /(?:act\s+as|pretend\s+(?:to\s+be|you\s+are)|you\s+(?:are\s+)?(?:now|must\s+be))\s+(?:a\s+|an\s+)?(?:judge|reviewer|approver|verifier|oracle)/i,
+  },
+  {
+    label: "role hijack",
+    pattern: /(?:new\s+)?(?:persona|mode|role)\s*[:=]\s*(?:approver|judge|god|admin|override)/i,
+  },
+  // ── separator / injection delimiter tricks ────────────────────────────
+  {
+    label: "injection delimiter",
+    pattern: /(?:={3,}|[-]{3,}|\*{3,})\s*(?:END\s+OF\s+SUBMISSION|SYSTEM\s+OVERRIDE|ADMIN\s+(?:INSTRUCTION|PROMPT|MESSAGE))\s*(?:={3,}|[-]{3,}|\*{3,})/i,
+  },
+  // ── encoded payload hints ─────────────────────────────────────────────
+  {
+    label: "encoded payload",
+    pattern: /(?:base64|rot13|hex(?:adecimal)?)\s*(?:encoded|decoded|decode|encode)?\s*(?:instruction|payload|command|message)/i,
+  },
 ];
 
 /** Scan untrusted text for verifier-directed manipulation. */

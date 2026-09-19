@@ -95,34 +95,31 @@ export function evaluatePolicy(input: PolicyInput): PolicyResult {
   let decision: PolicyDecision;
   let reason: string;
 
-  const releaseBlocked = checks.some((c) => !c.passed);
-
-  if (input.promptInjectionDetected && input.verdict === "FAIL") {
-    // adversarial submission AND the model rejected the work → buyer refund
+  if (input.promptInjectionDetected) {
+    // Any injection attempt = immediate REFUND — the submission is adversarial
     decision = "REFUND";
     reason =
-      "Prompt injection detected and work rejected — escrow refunded to buyer.";
-  } else if (input.promptInjectionDetected) {
-    // model may have been manipulated into PASS — deterministic override wins
-    decision = "MANUAL_REVIEW";
-    reason =
-      "Prompt injection detected — the model's verdict is untrusted. Release blocked by the deterministic policy override; a human must review this job.";
+      "⚠ Prompt injection detected — adversarial submission blocked. Escrow refunded to buyer. The seller attempted to manipulate the AI verifier.";
   } else if (!input.schemaValid || !input.hashMatches) {
     decision = "MANUAL_REVIEW";
     reason = !input.hashMatches
-      ? "Submission text does not match the on-chain commitment — verification cannot be bound to this job. No settlement."
-      : "AI response failed schema validation — verification could not be safely completed. No settlement.";
+      ? "Submission text does not match the on-chain commitment — verification cannot be bound to this job."
+      : "AI response failed schema validation — verification could not be safely completed.";
   } else if (input.verdict === "FAIL") {
     decision = "REFUND";
     reason = "Work failed verification against the job requirements — escrow refunded to buyer.";
-  } else if (releaseBlocked || input.verdict === "REVIEW") {
+  } else if (input.verdict === "REVIEW" || !input.schemaValid) {
     decision = "MANUAL_REVIEW";
-    reason = input.verdict === "REVIEW"
-      ? "Verifier returned REVIEW — insufficient certainty. No automatic settlement; funds remain in escrow."
-      : `Pass thresholds not met (score/confidence/requirements) — no automatic release; funds remain in escrow.`;
+    reason = "Verifier returned REVIEW — insufficient certainty. Funds remain in escrow.";
   } else {
-    decision = "RELEASE";
-    reason = `All policy checks passed (score ${score}/100, confidence ${input.confidence.toFixed(2)}) — release authorized.`;
+    const releaseBlocked = checks.some((c) => !c.passed);
+    if (releaseBlocked) {
+      decision = "MANUAL_REVIEW";
+      reason = `Pass thresholds not met (score ${score}/100, confidence ${input.confidence.toFixed(2)}) — no automatic release.`;
+    } else {
+      decision = "RELEASE";
+      reason = `All policy checks passed (score ${score}/100, confidence ${input.confidence.toFixed(2)}) — release authorized.`;
+    }
   }
 
   return { decision, checks, reason };

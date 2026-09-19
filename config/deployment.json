@@ -1,9 +1,9 @@
 {
-  "chainId": null,
-  "registry": null,
-  "escrow": null,
-  "verifier": null,
-  "deployer": null,
-  "deployedAt": null,
-  "blockNumber": null
+  "chainId": 10143,
+  "registry": "0x1a09a10fbff81eb2de565fdda79bb944f3523467",
+  "escrow": "0x16041c31040049a185b66d28dcbdaa6ca55682e9",
+  "verifier": "0x6a41c280BC8904f8Fc8FdC809b5D18C0A5da2032",
+  "deployer": "0x7d1111A97D275491573B4e9F289207e948f3b923",
+  "deployedAt": 1789815696,
+  "blockNumber": 63865203
 }

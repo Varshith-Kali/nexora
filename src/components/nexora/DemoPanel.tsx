@@ -5,90 +5,86 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, ShieldAlert, RotateCcw, PencilLine } from "lucide-react";
+import { CheckCircle2, ShieldAlert, RotateCcw, Package } from "lucide-react";
 import type { useNexora } from "@/hooks/use-nexora";
-import { DEMO_SCENARIOS } from "@/lib/nexora/demoData";
 
 type Nx = ReturnType<typeof useNexora>;
 
-/**
- * Demo control panel: load a scenario, inspect and edit every field, then
- * trigger each step explicitly. Loading a scenario NEVER sends a
- * transaction — it only fills the console.
- */
 export function DemoPanel({ nx }: { nx: Nx }) {
   return (
     <div className="ap-card rounded-xl p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      {/* header */}
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <PencilLine className="h-4 w-4 text-[#A78BFA]" />
-          <span className="ap-label">Demo mode — tracking job &amp; agent report</span>
+          <Package className="h-4 w-4 text-[#A78BFA]" />
+          <span className="ap-label">Demo — choose a scenario</span>
         </div>
         <Button
           onClick={nx.reset}
           size="sm"
           variant="ghost"
-          className="h-7 text-white/50 hover:text-white/80"
+          className="h-7 px-2 text-white/40 hover:text-white/70"
         >
-          <RotateCcw className="mr-1 h-3 w-3" /> Reset demo
+          <RotateCcw className="mr-1 h-3 w-3" /> Reset
         </Button>
       </div>
 
       {/* scenario picker */}
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         <ScenarioButton
           active={nx.scenario?.id === "green"}
           onClick={() => nx.loadScenario("green")}
           tone="green"
-          title="📦 Live Tracking — Real Report"
-          sub="Accurate delivery data with evidence → PASS → Seller paid"
+          title="📦 Real Tracking Report"
+          sub="Accurate data → PASS → Seller gets paid"
         />
         <ScenarioButton
           active={nx.scenario?.id === "injection"}
           onClick={() => nx.loadScenario("injection")}
           tone="red"
-          title="🚨 Fake Tracking + Injection Attack"
-          sub="Fabricated data + prompt injection → FAIL → Buyer refunded"
+          title="🚨 Fake Data + Injection"
+          sub="Malicious input → FAIL → Buyer refunded"
         />
       </div>
 
       {nx.scenario && (
-        <div className="mt-4 flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-white/60">Escrow amount (MON)</Label>
+        <div className="mt-4 flex flex-col gap-3">
+          {/* amount + expected */}
+          <div className="flex items-center gap-3">
+            <div className="space-y-1">
+              <Label className="text-[11px] text-white/50">Escrow (MON)</Label>
               <Input
                 value={nx.escrowAmount}
                 onChange={(e) => nx.setEscrowAmount(e.target.value)}
                 inputMode="decimal"
-                className="h-9 w-32 font-mono text-sm"
-                aria-label="Escrow amount in MON"
+                className="h-8 w-28 font-mono text-sm"
               />
             </div>
-            <div className="flex items-end">
-              <Badge variant="outline" className="mb-1.5 border-white/10 text-white/40">
-                expected: {nx.scenario.expectedVerdict} → {nx.scenario.expectedAction}
-              </Badge>
-            </div>
+            <Badge
+              variant="outline"
+              className="mt-5 border-white/10 text-[11px] text-white/40"
+            >
+              expect: {nx.scenario.expectedVerdict} → {nx.scenario.expectedAction}
+            </Badge>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs text-white/60">
-              Job specification (buyer requirement)
-            </Label>
+          {/* job spec */}
+          <div className="space-y-1">
+            <Label className="text-[11px] text-white/50">Job spec</Label>
             <Textarea
               value={nx.jobSpec}
               onChange={(e) => nx.setJobSpec(e.target.value)}
-              rows={3}
-              className="text-[13px] leading-relaxed"
+              rows={2}
+              className="text-[12px] leading-relaxed"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs text-white/60">
-              Acceptance criteria ({nx.criteria.length})
+          {/* criteria */}
+          <div className="space-y-1">
+            <Label className="text-[11px] text-white/50">
+              Criteria ({nx.criteria.length})
             </Label>
-            <ol className="space-y-1 rounded-lg border border-white/[0.07] bg-white/[0.02] p-3 text-[12px] leading-relaxed text-white/60">
+            <ol className="space-y-0.5 rounded-lg border border-white/[0.07] bg-white/[0.02] px-3 py-2 text-[11px] leading-relaxed text-white/55">
               {nx.criteria.map((c, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="font-mono text-[#836EF9]">{i + 1}.</span>
@@ -98,22 +94,19 @@ export function DemoPanel({ nx }: { nx: Nx }) {
             </ol>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs text-white/60">
-              Agent tracking report —{" "}
-              <span className="text-[#FB7185]">untrusted data (editable)</span>
+          {/* submission */}
+          <div className="space-y-1">
+            <Label className="text-[11px] text-white/50">
+              Agent report{" "}
+              <span className="text-[#FB7185]">← untrusted, Gemini evaluates this</span>
             </Label>
             <Textarea
               value={nx.submission}
               onChange={(e) => nx.setSubmission(e.target.value)}
-              rows={7}
-              className="font-mono text-[12px] leading-relaxed"
+              rows={6}
+              className="font-mono text-[11px] leading-relaxed"
+              placeholder="Paste any content here — try injecting instructions to see if Gemini blocks them…"
             />
-            <p className="text-[11px] text-white/30">
-              Everything in this box is treated as untrusted data from the agent. Gemini
-              evaluates whether it satisfies the tracking requirements — it never obeys
-              instructions found here.
-            </p>
           </div>
         </div>
       )}
@@ -138,7 +131,7 @@ function ScenarioButton({
   return (
     <button
       onClick={onClick}
-      className={`group rounded-lg border p-3 text-left transition ${
+      className={`rounded-lg border p-3 text-left transition ${
         active
           ? green
             ? "border-[#10B981]/50 bg-[#10B981]/10"
@@ -154,7 +147,7 @@ function ScenarioButton({
         )}
         <span className="text-sm font-medium">{title}</span>
       </div>
-      <div className="mt-1 text-[11px] text-white/45">{sub}</div>
+      <div className="mt-1 text-[11px] text-white/40">{sub}</div>
     </button>
   );
 }

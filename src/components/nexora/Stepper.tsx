@@ -1,30 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  Briefcase,
-  Lock,
-  FileUp,
-  Sparkles,
-  Scale,
-  Coins,
-} from "lucide-react";
+import { Lock, FileUp, Sparkles, Scale, Coins, PlusCircle } from "lucide-react";
 import type { useNexora } from "@/hooks/use-nexora";
 
 type Nx = ReturnType<typeof useNexora>;
 
-/**
- * The lifecycle rail — WHO acts, WHAT happens, WHEN. Each stage lights up
- * from real state (on-chain status / verification / settlement), never from
- * timers: what you see is what actually happened.
- */
 const STAGES = [
-  { key: "create", icon: Briefcase, title: "Create job", actor: "Buyer wallet", desc: "Specify requirements + acceptance criteria" },
-  { key: "fund", icon: Lock, title: "Fund escrow", actor: "Buyer wallet", desc: "openJob() locks MON on Monad Testnet" },
-  { key: "submit", icon: FileUp, title: "Submit work", actor: "Seller agent", desc: "submitWork() commits keccak256 hash" },
-  { key: "verify", icon: Sparkles, title: "AI verification", actor: "Gemini (off-chain)", desc: "Evaluates submission vs criteria — 0 tx" },
-  { key: "policy", icon: Scale, title: "Policy decision", actor: "Policy engine", desc: "Deterministic gate: RELEASE / REFUND / REVIEW" },
-  { key: "settle", icon: Coins, title: "Settlement", actor: "Verifier operator", desc: "settle() on Monad — real MON moves" },
+  { key: "fund",   icon: PlusCircle, title: "Open Job",      actor: "Buyer",    desc: "Lock MON in escrow" },
+  { key: "submit", icon: FileUp,     title: "Submit Work",   actor: "Seller",   desc: "Hash committed on-chain" },
+  { key: "verify", icon: Sparkles,   title: "AI Verify",     actor: "Gemini",   desc: "Evaluate vs criteria" },
+  { key: "policy", icon: Scale,      title: "Policy Gate",   actor: "Engine",   desc: "PASS / FAIL decision" },
+  { key: "settle", icon: Coins,      title: "Settle",        actor: "Verifier", desc: "MON released or refunded" },
 ] as const;
 
 type StageKey = (typeof STAGES)[number]["key"];
@@ -40,65 +27,99 @@ function stageIndex(nx: Nx): number {
 
 export function Stepper({ nx }: { nx: Nx }) {
   const current = stageIndex(nx);
-  const failed = nx.verification?.policy.decision === "REFUND" ||
-    nx.job?.status === "Refunded";
+  const failed =
+    nx.verification?.policy.decision === "REFUND" || nx.job?.status === "Refunded";
   const reviewing = nx.verification?.policy.decision === "MANUAL_REVIEW";
 
   return (
     <div className="ap-card rounded-xl p-4">
-      <div className="ap-label">Lifecycle — trust boundary at every hop</div>
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="mb-3 flex items-center gap-2">
+        <Lock className="h-4 w-4 text-[#A78BFA]" />
+        <span className="ap-label">Flow</span>
+        <div className="ml-auto flex items-center gap-1.5">
+          {STAGES.map((_, i) => {
+            const done = current > i + 1;
+            const active = current === i + 1;
+            return (
+              <span
+                key={i}
+                className="h-1.5 rounded-full transition-all"
+                style={{
+                  width: active ? "16px" : "6px",
+                  background: done
+                    ? "#10B981"
+                    : active
+                      ? "#836EF9"
+                      : "rgba(255,255,255,0.12)",
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-5 gap-1.5">
         {STAGES.map((s, i) => {
           const idx = i + 1;
           const done = current > idx;
           const active = current === idx;
-          const last = s.key === "settle" as StageKey;
-          const terminalBad = last && (failed || reviewing);
-          const terminalGood = last && current === 6 && !failed && !reviewing;
-          const accent = terminalBad
-            ? failed ? "#F43F5E" : "#F59E0B"
+          const isLast = s.key === "settle" as StageKey;
+          const terminalBad = isLast && (failed || reviewing);
+          const terminalGood = isLast && current === 6 && !failed && !reviewing;
+
+          const color = terminalBad
+            ? failed
+              ? "#F43F5E"
+              : "#F59E0B"
             : terminalGood
               ? "#10B981"
-              : active
-                ? "#836EF9"
-                : "rgba(255,255,255,0.14)";
+              : done
+                ? "#10B981"
+                : active
+                  ? "#836EF9"
+                  : "rgba(255,255,255,0.2)";
+
           return (
             <motion.div
               key={s.key}
               initial={false}
-              animate={{ scale: active ? 1.02 : 1 }}
-              transition={{ duration: 0.25 }}
-              className={`rounded-lg border p-3 ${
+              animate={{ scale: active ? 1.03 : 1 }}
+              transition={{ duration: 0.2 }}
+              className={`rounded-xl border p-3 transition-colors ${
                 active
                   ? "border-[#836EF9]/50 bg-[#836EF9]/[0.08]"
                   : done
-                    ? "border-white/10 bg-white/[0.03]"
+                    ? "border-[#10B981]/20 bg-[#10B981]/[0.04]"
                     : "border-white/[0.06] bg-transparent"
               }`}
             >
               <div className="flex items-center justify-between">
-                <s.icon
-                  className="h-4 w-4"
-                  style={{ color: accent }}
-                />
+                <s.icon className="h-4 w-4" style={{ color }} />
                 <span
                   className="h-1.5 w-1.5 rounded-full"
-                  style={{ background: accent, boxShadow: active ? `0 0 10px ${accent}` : "none" }}
+                  style={{
+                    background: color,
+                    boxShadow: active ? `0 0 8px ${color}` : "none",
+                  }}
                 />
               </div>
-              <div className="mt-2 text-[13px] font-medium leading-tight">{s.title}</div>
-              <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-[#A78BFA]/80">
+              <div className="mt-2 text-[12px] font-semibold leading-tight">{s.title}</div>
+              <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-wider" style={{ color }}>
                 {s.actor}
               </div>
-              <div className="mt-1 text-[10px] leading-snug text-white/35">{s.desc}</div>
-              {nx.txs[s.key === "submit" ? "submit" : s.key === "settle" ? "settle" : s.key === "fund" ? "open" : undefined as never] && (
+              <div className="mt-1 text-[10px] leading-snug text-white/30">{s.desc}</div>
+
+              {/* tx link */}
+              {(nx.txs as Record<string, { explorerUrl: string } | undefined>)[
+                s.key === "submit" ? "submit" : s.key === "settle" ? "settle" : s.key === "fund" ? "open" : ""
+              ] && (
                 <a
                   href={(nx.txs as Record<string, { explorerUrl: string } | undefined>)[
                     s.key === "submit" ? "submit" : s.key === "settle" ? "settle" : "open"
                   ]?.explorerUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-1 inline-block font-mono text-[9px] text-[#38BDF8] underline-offset-2 hover:underline"
+                  className="mt-1.5 inline-block font-mono text-[9px] text-[#38BDF8] hover:underline"
                 >
                   tx ↗
                 </a>
