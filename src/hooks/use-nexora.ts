@@ -205,14 +205,21 @@ export function useNexora() {
 
   // ── actions ────────────────────────────────────────────────────────────
   const connect = useCallback(async () => {
-    const injected = connectors.find((c) => c.id === "injected" || c.type === "injected");
-    if (!injected) {
+    // Prefer the explicit MetaMask connector; fall back to any injected wallet.
+    const mm =
+      connectors.find((c) => c.id === "metaMask" || c.name === "MetaMask") ??
+      connectors.find((c) => c.id === "injected" || c.type === "injected");
+    if (!mm) {
       toast.error("No injected wallet found. Install MetaMask or use a browser wallet.");
       return;
     }
     try {
-      await connectAsync({ connector: injected });
+      await connectAsync({ connector: mm });
       toast.success("Wallet connected.");
+      // Auto-add Monad Testnet to MetaMask right after connecting so the user
+      // lands on the right network without a manual switch step.
+      const { ensureMonadNetwork } = await import("@/lib/wallet");
+      await ensureMonadNetwork();
     } catch {
       toast.error("Wallet connection was declined.");
     }
@@ -220,6 +227,9 @@ export function useNexora() {
 
   const switchToMonad = useCallback(async () => {
     try {
+      // Try adding the chain first (no-op if already added) then switch.
+      const { ensureMonadNetwork } = await import("@/lib/wallet");
+      await ensureMonadNetwork();
       await switchChainAsync({ chainId: monadTestnet.id });
       toast.success("Switched to Monad Testnet.");
     } catch {
