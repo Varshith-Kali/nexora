@@ -226,10 +226,9 @@ async function callGemini(req: VerifyRequest): Promise<ProviderResult> {
     const result = await callGeminiWithKey(req, keys[i]);
     if (result.ok) return result;
     lastResult = result;
-    // Only rotate on rate-limit or auth failures — other errors are final.
-    const rotatable = result.error === "AI_PROVIDER_RATE_LIMITED" || result.error === "AI_PROVIDER_AUTH_FAILED";
-    if (!rotatable || i === keys.length - 1) break;
-    console.warn(JSON.stringify({ event: "gemini.key_rotation", keyIndex: i, error: result.error }));
+    if (i < keys.length - 1) {
+      console.warn(JSON.stringify({ event: "gemini.key_rotation", keyIndex: i, error: result.error }));
+    }
   }
   return lastResult!;
 }
