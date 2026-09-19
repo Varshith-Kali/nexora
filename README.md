@@ -136,10 +136,10 @@ GEMINI_MODEL=gemini-flash-latest
 SELLER_AGENT_PRIVATE_KEY=0x...    # Signs submitWork() — receives payment
 VERIFIER_PRIVATE_KEY=0x...        # Signs settle() — must match contract verifier address
 
-# Contract addresses (deploy your own or use the ones above)
+# Contract addresses (deploy your own or use the live ones from the table above)
 MONAD_ESCROW_ADDRESS=0x16041c31040049a185b66d28dcbdaa6ca55682e9
 MONAD_REGISTRY_ADDRESS=0x1a09a10fbff81eb2de565fdda79bb944f3523467
-MONAD_VERIFIER_ADDRESS=0x6a41c280BC8904f8Fc8FdC809b5D18C0A5da2032
+MONAD_VERIFIER_ADDRESS=0x<your_verifier_wallet_address>
 
 # RPC (public endpoint — no API key needed)
 MONAD_TESTNET_RPC_URL=https://testnet-rpc.monad.xyz
@@ -195,17 +195,6 @@ Contracts (Monad Testnet)
 - **AI**: Google Gemini (`gemini-flash-latest`) with structured output + 3-key rotation
 - **Contracts**: Solidity 0.8.24 (compiled with solc, no Foundry required)
 - **Deployment**: Vercel (serverless, no edge runtime)
-
----
-
-## Wallets (Demo Testnet — Monad)
-
-| Role | Address |
-|---|---|
-| **Buyer** (Account 1) | `0x7Ac59E62656CA555009900BD85dfA3a225cb8653` |
-| **Seller** (Account 2) | `0x04Afc4Bd311F522cAed7951C28096846D7FE6209` |
-| **Deployer** (Account 3) | `0x7d1111A97D275491573B4e9F289207e948f3b923` |
-| **Verifier** (Account 4) | `0x6a41c280BC8904f8Fc8FdC809b5D18C0A5da2032` |
 
 ---
 
