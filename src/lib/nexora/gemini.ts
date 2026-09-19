@@ -33,11 +33,25 @@ const GEMINI_ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models";
 
 export function geminiModel(): string {
-  return process.env.GEMINI_MODEL?.trim() || "gemini-3.1-flash-lite";
+  return process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash-lite";
 }
 
 export function providerName(): "gemini" | "mock" {
   return process.env.GEMINI_API_KEY?.trim() ? "gemini" : "mock";
+}
+
+/**
+ * Returns all configured Gemini API keys (up to 3).
+ * Keys 2 and 3 are read from GEMINI_API_KEY_2 / GEMINI_API_KEY_3.
+ * Used for automatic key rotation on 429 / auth failures.
+ */
+function allApiKeys(): string[] {
+  const keys = [
+    process.env.GEMINI_API_KEY?.trim(),
+    process.env.GEMINI_API_KEY_2?.trim(),
+    process.env.GEMINI_API_KEY_3?.trim(),
+  ].filter((k): k is string => Boolean(k));
+  return keys;
 }
 
 // ------------------------------------------------------------ system prompt
@@ -116,8 +130,13 @@ const responseSchema = {
 } as const;
 
 // ------------------------------------------------------------- gemini call
-async function callGemini(req: VerifyRequest): Promise<ProviderResult> {
-  const apiKey = process.env.GEMINI_API_KEY!.trim();
+/**
+ * Calls Gemini with automatic key rotation.
+ * Tries GEMINI_API_KEY first; on 429 or auth failure automatically retries
+ * with GEMINI_API_KEY_2 then GEMINI_API_KEY_3 if configured.
+ * Each key gets one attempt; the last failure error is returned if all fail.
+ */
+async function callGeminiWithKey(req: VerifyRequest, apiKey: string): Promise<ProviderResult> {
   const model = geminiModel();
   const url = `${GEMINI_ENDPOINT}/${model}:generateContent?key=${apiKey}`;
 
@@ -184,6 +203,21 @@ async function callGemini(req: VerifyRequest): Promise<ProviderResult> {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function callGemini(req: VerifyRequest): Promise<ProviderResult> {
+  const keys = allApiKeys();
+  let lastResult: ProviderResult | null = null;
+  for (let i = 0; i < keys.length; i++) {
+    const result = await callGeminiWithKey(req, keys[i]);
+    if (result.ok) return result;
+    lastResult = result;
+    // Only rotate on rate-limit or auth failures — other errors are final.
+    const rotatable = result.error === "AI_PROVIDER_RATE_LIMITED" || result.error === "AI_PROVIDER_AUTH_FAILED";
+    if (!rotatable || i === keys.length - 1) break;
+    console.warn(JSON.stringify({ event: "gemini.key_rotation", keyIndex: i, error: result.error }));
+  }
+  return lastResult!;
 }
 
 /** Minimal shape coercion (full zod validation happens in verify.ts). */
