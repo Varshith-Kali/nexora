@@ -87,10 +87,16 @@ export function WalletPanel({ nx }: { nx: Nx }) {
     void refresh();
   }, [refresh]);
 
-  // also refresh when wallet connects
+  // also refresh when wallet connects or when jobs are created/settled
   useEffect(() => {
     if (isConnected) void refresh();
   }, [isConnected, refresh]);
+
+  useEffect(() => {
+    if (nx.settlement || nx.stage === "settled" || nx.stage === "funded" || nx.txs.open || nx.txs.settle) {
+      void refresh();
+    }
+  }, [nx.settlement, nx.stage, nx.txs.open, nx.txs.settle, refresh]);
 
   return (
     <div className="ap-card rounded-xl p-4">

@@ -110,7 +110,7 @@ export function useNexora() {
   const { connectAsync, connectors } = useConnect();
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
-  const { data: balance } = useBalance({ address });
+  const { data: balance, refetch: refetchBalance } = useBalance({ address });
 
   const [health, setHealth] = useState<HealthInfo | null>(null);
   // localStorage hydration happens ONCE via lazy initializers (no setState in
@@ -398,6 +398,7 @@ export function useNexora() {
 
       const j = await readJob(openedJobId);
       if (j) setJob(j);
+      void refetchBalance();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Job creation failed";
       toast.error(message.includes("user rejected")
@@ -512,12 +513,13 @@ export function useNexora() {
       );
       const j = await readJob(jobId);
       if (j) setJob(j);
+      void refetchBalance();
     } catch {
       toast.error("Settlement failed. Escrow state was not changed.");
     } finally {
       setBusy(null);
     }
-  }, [jobId, verification, readJob]);
+  }, [jobId, verification, readJob, refetchBalance]);
 
   // ── manual job refresh (for when RPC was slow after tx) ───────────────
   const refreshJob = useCallback(async () => {
@@ -526,12 +528,13 @@ export function useNexora() {
     const j = await readJob(jobId);
     if (j) {
       setJob(j);
+      void refetchBalance();
       toast.info(`Job #${jobId} refreshed — status: ${j.status}`);
     } else {
       toast.error("Could not fetch job state. Monad RPC may be slow — try again.");
     }
     setBusy(null);
-  }, [jobId, readJob]);
+  }, [jobId, readJob, refetchBalance]);
 
   return {
     // health & wallet
