@@ -29,6 +29,7 @@ import { DemoPanel } from "@/components/nexora/DemoPanel";
 import { Stepper } from "@/components/nexora/Stepper";
 import { ActionPanel } from "@/components/nexora/ActionPanel";
 import { VerificationCard } from "@/components/nexora/VerificationCard";
+import { VerificationFlow } from "@/components/nexora/VerificationFlow";
 import { SettlementCard } from "@/components/nexora/SettlementCard";
 import { JobCard } from "@/components/nexora/JobCard";
 
@@ -117,6 +118,11 @@ export default function NexoraDashboard() {
               <DemoPanel nx={nx} />
               <Stepper nx={nx} />
               <ActionPanel nx={nx} />
+              {/* ── Verification flow: 4-layer visualization (always shown from submitted stage) */}
+              {(nx.stage === "submitted" || nx.stage === "verified" || nx.stage === "settled" || nx.busy === "verify") && (
+                <VerificationFlow nx={nx} />
+              )}
+              {/* ── Verification detail card: supplementary evidence (shown after verification) */}
               {nx.verification && <VerificationCard verification={nx.verification} />}
               {nx.settlement && <SettlementCard settlement={nx.settlement} />}
             </div>

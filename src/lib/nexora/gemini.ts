@@ -33,7 +33,7 @@ const GEMINI_ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models";
 
 export function geminiModel(): string {
-  return process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash-lite";
+  return process.env.GEMINI_MODEL?.trim() || "gemini-3.1-flash-lite";
 }
 
 export function providerName(): "gemini" | "mock" {
