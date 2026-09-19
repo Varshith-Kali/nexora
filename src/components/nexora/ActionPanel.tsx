@@ -1,22 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Loader2, PlayCircle, ShieldAlert, Coins, Sparkles, Zap, RefreshCw } from "lucide-react";
 import type { useNexora } from "@/hooks/use-nexora";
 
 type Nx = ReturnType<typeof useNexora>;
 
 export function ActionPanel({ nx }: { nx: Nx }) {
-  const [confirmSettle, setConfirmSettle] = useState<null | "RELEASE" | "REFUND">(null);
 
   const decision = nx.verification?.policy.decision;
   const awaitingSettle =
@@ -99,7 +89,8 @@ export function ActionPanel({ nx }: { nx: Nx }) {
 
         {awaitingSettle && (
           <PrimaryButton
-            onClick={() => setConfirmSettle(decision === "RELEASE" ? "RELEASE" : "REFUND")}
+            onClick={() => void nx.settle(decision === "RELEASE" ? "RELEASE" : "REFUND")}
+            loading={busy("settle")}
             label={
               decision === "RELEASE"
                 ? "4 · Release to Seller ✓"
@@ -140,49 +131,6 @@ export function ActionPanel({ nx }: { nx: Nx }) {
             </Button>
           )}
       </div>
-
-      {/* settlement confirm dialog */}
-      <Dialog
-        open={confirmSettle !== null}
-        onOpenChange={(o) => !o && setConfirmSettle(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {confirmSettle === "RELEASE"
-                ? "Release escrow → Seller?"
-                : "Refund escrow → Buyer?"}
-            </DialogTitle>
-            <DialogDescription>
-              Real Monad Testnet transaction — cannot be undone.
-              {confirmSettle === "RELEASE"
-                ? " MON moves to the seller agent wallet."
-                : " MON returns to your wallet."}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setConfirmSettle(null)}>
-              Cancel
-            </Button>
-            <Button
-              className={
-                confirmSettle === "RELEASE"
-                  ? "bg-[#10B981] hover:bg-[#34D399]"
-                  : "bg-[#F43F5E] hover:bg-[#FB7185]"
-              }
-              disabled={!!nx.busy}
-              onClick={() => {
-                const action = confirmSettle;
-                setConfirmSettle(null);
-                if (action) void nx.settle(action);
-              }}
-            >
-              {busy("settle") && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
