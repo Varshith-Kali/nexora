@@ -1,0 +1,38 @@
+# dependencies / build artifacts
+node_modules/
+.next/
+*.tsbuildinfo
+
+# foundry — forge-std is vendored on purpose so a fresh clone builds and
+# tests with zero network setup (forge install can fail at judge time)
+out/
+cache/
+broadcast/
+
+# secrets — NEVER commit (placeholders live in .env.example)
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# runtime state / logs
+data/
+*.log
+
+# monskills tooling + local-only artifacts
+.monskills-tmp/
+
+# sandbox workspace artifacts (not part of the product)
+skills/
+download/
+tool-results/
+upload/
+worklog.md
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

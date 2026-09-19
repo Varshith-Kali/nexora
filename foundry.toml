@@ -1,0 +1,46 @@
+# Nexora — Foundry configuration
+# Build / test / deploy the NexoraRegistry + NexoraEscrow contracts.
+# Local demo chain:  anvil (chainId 31337)
+# Target chain:      Monad Testnet (chainId 10143)
+
+[profile.default]
+src = "contracts"
+out = "out"
+libs = ["lib"]
+test = "test"
+script = "script"
+solc_version = "0.8.24"
+optimizer = true
+optimizer_runs = 200
+verbosity = 3
+
+# Deploy.s.sol writes the deployment record (config/deployment.json) so that
+# the Next.js app can pick up the addresses
+# without any manual copy-paste.
+fs_permissions = [{ access = "write", path = "./config" }]
+
+# Lints: style rules skipped deliberately — this escrow intentionally uses
+# raw `.call` payouts (receiver-agnostic transfer) and emits events *before*
+# interactions (checks-effects-interactions). Compiler warnings stay ON.
+[lint]
+exclude_lints = [
+    "arbitrary-send-eth",
+    "could-be-immutable",
+    "function-init-state",
+    "literal-instead-of-constant",
+    "low-level-calls",
+    "modifier-used-only-once",
+    "multi-contract-file",
+    "non-reentrant-not-first",
+    "reentrancy-eth",
+    "reentrancy-events",
+    "screaming-snake-case-immutable",
+    "unused-return",
+    "unwrapped-modifier-logic",
+]
+
+[rpc_endpoints]
+local = "${LOCAL_RPC_URL:http://localhost:8545}"
+monad = "${MONAD_RPC_URL:https://testnet-rpc.monad.xyz}"
+
+# See more config options: https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md
