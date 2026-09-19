@@ -79,14 +79,28 @@ export function SettlementCard({ settlement }: { settlement: SettlementResult })
         </div>
       </div>
 
-      <a
-        href={settlement.explorerUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12px] text-white/70 transition hover:border-white/25 hover:text-white"
-      >
-        View on Monadscan <ExternalLink className="h-3.5 w-3.5" />
-      </a>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <a
+          href={settlement.explorerUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12px] text-white/70 transition hover:border-white/25 hover:text-white"
+        >
+          View Settlement Tx <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+        <a
+          href={`https://testnet.monadscan.com/address/${settlement.recipient}#internaltx`}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12px] text-[#38BDF8]/80 transition hover:border-white/25 hover:text-[#38BDF8]"
+        >
+          View Recipient Internal Txns ↗
+        </a>
+      </div>
+
+      <p className="mt-2.5 text-[11px] leading-relaxed text-white/40">
+        💡 <strong>Note for explorers:</strong> Contract payouts/refunds are native contract transfers. On Monadscan, they are credited immediately to the account balance and listed under the <span className="text-white/70 font-medium">“Internal Transactions”</span> tab.
+      </p>
     </motion.div>
   );
 }
