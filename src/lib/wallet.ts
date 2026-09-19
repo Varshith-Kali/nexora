@@ -9,11 +9,18 @@
  * confirms every transaction it creates. The seller agent and the settlement
  * operator are server-side testnet keys (see lib/nexora/agents.ts).
  *
- * Default chain: Monad Testnet (10143). On connect, MetaMask is prompted to
- * add this chain automatically via wallet_addEthereumChain — no manual setup.
+ * Connector strategy (browser dapp — no mobile SDK):
+ *   1. injected({ target: "metaMask" }) — targets window.ethereum where
+ *      isMetaMask === true. id = "metaMask", direct EIP-1193 calls.
+ *   2. injected()                        — generic fallback for Rabby,
+ *      Coinbase Wallet, Frame, etc. id = "injected".
+ *
+ * We intentionally do NOT use metaMask() (the MetaMask SDK connector) because
+ * that connector uses @metamask/connect-evm, a mobile-first SDK that fails
+ * silently when only the browser extension is present.
  */
 import { createConfig, http } from "wagmi";
-import { injected, metaMask } from "wagmi/connectors";
+import { injected } from "wagmi/connectors";
 import { defineChain } from "viem";
 
 /** Monad Testnet as a viem/wagmi chain definition. */
@@ -32,10 +39,11 @@ export const wagmiConfig = createConfig({
   // Only Monad Testnet — prevents any accidental mainnet interactions.
   chains: [monadTestnet],
   connectors: [
-    // MetaMask explicit connector (shows MetaMask name/icon in prompts).
-    metaMask(),
-    // Generic injected fallback for Rabby, Coinbase Wallet, etc.
+    // Primary: MetaMask browser extension (window.ethereum.isMetaMask).
+    // Uses direct EIP-1193 calls — no SDK, no mobile overhead.
     injected({ target: "metaMask" }),
+    // Fallback: any other injected wallet (Rabby, Coinbase Wallet, Frame…).
+    injected(),
   ],
   transports: {
     [monadTestnet.id]: http("https://testnet-rpc.monad.xyz", { timeout: 15_000 }),
@@ -73,7 +81,7 @@ export async function ensureMonadNetwork(): Promise<boolean> {
     });
     return true;
   } catch {
-    // User rejected the prompt — non-fatal, they can still try switchToMonad.
+    // User rejected or wallet doesn't support EIP-3085 — non-fatal.
     return false;
   }
 }

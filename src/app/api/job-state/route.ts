@@ -28,29 +28,33 @@ export async function GET(req: Request) {
   }
 
   try {
+    // viem decodes a named tuple as an object, NOT a positional array.
     const raw = (await publicClient().readContract({
       address: escrow as `0x${string}`,
       abi: ESCROW_ABI as Abi,
       functionName: "getJob",
       args: [BigInt(jobId)],
-    })) as [string, string, bigint, string, number, bigint];
+    })) as any;
 
-    if (raw[0] === "0x0000000000000000000000000000000000000000") {
+    const buyer = (raw?.buyer ?? raw?.[0]) as string;
+    if (!buyer || buyer === "0x0000000000000000000000000000000000000000") {
       return NextResponse.json({ job: null, error: "JOB_NOT_FOUND" }, { status: 404 });
     }
 
     const statuses = ["Open", "Submitted", "Released", "Refunded"] as const;
+    const rawStatus = raw.status !== undefined ? raw.status : raw[4];
     return NextResponse.json({
       job: {
-        buyer: raw[0],
-        seller: raw[1],
-        amount: (Number(raw[2]) / 1e18).toFixed(4),
-        amountRaw: raw[2].toString(),
-        outputHash: raw[3],
-        status: statuses[Number(raw[4])] ?? "Open",
-        createdAt: Number(raw[5]),
+        buyer,
+        seller: (raw.seller ?? raw[1]) as string,
+        amount: (Number(raw.amount ?? raw[2]) / 1e18).toFixed(4),
+        amountRaw: (raw.amount ?? raw[2]).toString(),
+        outputHash: (raw.outputHash ?? raw[3]) as string,
+        status: statuses[Number(rawStatus)] ?? "Open",
+        createdAt: Number(raw.createdAt ?? raw[5]),
       },
     });
+
   } catch {
     return NextResponse.json({ job: null, error: "RPC_READ_FAILED" }, { status: 502 });
   }

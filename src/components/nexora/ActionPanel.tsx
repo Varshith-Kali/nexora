@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, PlayCircle, ShieldAlert, Coins, Sparkles, Zap } from "lucide-react";
+import { Loader2, PlayCircle, ShieldAlert, Coins, Sparkles, Zap, RefreshCw } from "lucide-react";
 import type { useNexora } from "@/hooks/use-nexora";
 
 type Nx = ReturnType<typeof useNexora>;
@@ -59,12 +59,26 @@ export function ActionPanel({ nx }: { nx: Nx }) {
         )}
 
         {nx.canSubmit && (
-          <PrimaryButton
-            onClick={() => void nx.submitWork()}
-            loading={busy("submit")}
-            label="2 · Submit Work"
-            sub="Seller agent commits keccak256 hash on-chain"
-          />
+          <>
+            {nx.job === null && nx.jobId !== null && (
+              // Job was created but RPC hasn't returned its status yet —
+              // show a refresh button alongside Submit Work.
+              <button
+                onClick={() => void nx.refreshJob()}
+                disabled={!!nx.busy}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[12px] text-white/50 transition hover:bg-white/[0.07] disabled:opacity-50"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${nx.busy === "refresh" ? "animate-spin" : ""}`} />
+                Refresh job status
+              </button>
+            )}
+            <PrimaryButton
+              onClick={() => void nx.submitWork()}
+              loading={busy("submit")}
+              label="2 · Submit Work"
+              sub="Seller agent commits keccak256 hash on-chain"
+            />
+          </>
         )}
 
         {nx.canVerify && (

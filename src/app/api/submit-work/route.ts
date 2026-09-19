@@ -55,37 +55,42 @@ export async function POST(req: Request) {
   const hash = submissionHash(submission);
 
   // On-chain pre-checks (read-only — no gas spent on doomed transactions).
+  // viem decodes getJob as a named object {buyer,seller,amount,outputHash,status,createdAt}
+  // NOT a positional array — use property names, not numeric indices.
   try {
     const raw = (await publicClient().readContract({
       address: escrow as `0x${string}`,
       abi: ESCROW_ABI as Abi,
       functionName: "getJob",
       args: [BigInt(jobId)],
-    })) as [string, string, bigint, string, number, bigint];
+    })) as any;
 
-    if (raw[0] === "0x0000000000000000000000000000000000000000") {
+    const buyer = (raw?.buyer ?? raw?.[0]) as string;
+    if (!buyer || buyer === "0x0000000000000000000000000000000000000000") {
       return NextResponse.json(
         { error: "JOB_NOT_FOUND", message: `Job #${jobId} does not exist.` },
         { status: 404 },
       );
     }
-    const status = ["Open", "Submitted", "Released", "Refunded"][Number(raw[4])];
+    const rawStatus = raw.status !== undefined ? raw.status : raw[4];
+    const status = ["Open", "Submitted", "Released", "Refunded"][Number(rawStatus)];
     if (status !== "Open") {
       return NextResponse.json(
         {
           error: "JOB_NOT_OPEN",
-          message: `Job #${jobId} is already ${status}.`,
+          message: `Job #${jobId} is already ${status ?? "in an unknown state"}.`,
           status,
         },
         { status: 409 },
       );
     }
-    const jobSeller = raw[1].toLowerCase();
+    const seller = (raw.seller ?? raw[1]) as string;
+    const jobSeller = seller.toLowerCase();
     if (jobSeller !== sellerAgentAddress()!.toLowerCase()) {
       return NextResponse.json(
         {
           error: "SELLER_MISMATCH",
-          message: `Job #${jobId} targets a different seller (${raw[1]}). This demo agent cannot submit for it.`,
+          message: `Job #${jobId} targets a different seller (${seller}). This demo agent cannot submit for it.`,
         },
         { status: 409 },
       );
@@ -97,6 +102,7 @@ export async function POST(req: Request) {
       { status: 502 },
     );
   }
+
 
   // The single, explicit, user-triggered transaction of this route.
   try {

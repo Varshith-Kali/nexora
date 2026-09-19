@@ -53,16 +53,18 @@ async function readOnChainJob(jobId: number): Promise<OnChainJob | null> {
       abi: ESCROW_ABI as Abi,
       functionName: "getJob",
       args: [BigInt(jobId)],
-    })) as [string, string, bigint, string, number, bigint];
-    if (raw[0] === "0x0000000000000000000000000000000000000000") return null;
+    })) as any;
+    const buyer = (raw?.buyer ?? raw?.[0]) as string;
+    if (!buyer || buyer === "0x0000000000000000000000000000000000000000") return null;
     const statuses = ["Open", "Submitted", "Released", "Refunded"] as const;
+    const rawStatus = raw.status !== undefined ? raw.status : raw[4];
     return {
-      buyer: raw[0],
-      seller: raw[1],
-      amount: raw[2],
-      outputHash: raw[3],
-      status: statuses[Number(raw[4])] ?? "Open",
-      createdAt: raw[5],
+      buyer,
+      seller: (raw.seller ?? raw[1]) as string,
+      amount: (raw.amount ?? raw[2]) as bigint,
+      outputHash: (raw.outputHash ?? raw[3]) as string,
+      status: statuses[Number(rawStatus)] ?? "Open",
+      createdAt: (raw.createdAt ?? raw[5]) as bigint,
     };
   } catch {
     return null;

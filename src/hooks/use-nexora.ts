@@ -196,8 +196,12 @@ export function useNexora() {
 
   const wrongNetwork = isConnected && chainId !== monadTestnet.id;
   const canCreate = isConnected && !wrongNetwork && isDeployed && !!scenario && stage === "ready";
-  const canSubmit = stage === "funded" && job?.status === "Open";
-  const canVerify = stage === "submitted" && job?.status === "Submitted";
+  // canSubmit: allow when stage is "funded" and job is either Open or not yet
+  // fetched (job === null). A null job just means the RPC call hasn't landed yet
+  // — the jobId existing is enough to know the escrow was opened successfully.
+  const canSubmit = stage === "funded" && (job === null || job.status === "Open");
+  // canVerify: same pattern — allow when job is Submitted or job data is pending.
+  const canVerify = stage === "submitted" && (job === null || job.status === "Submitted");
   const canSettle =
     stage === "verified" &&
     (verification?.policy.decision === "RELEASE" || verification?.policy.decision === "REFUND") &&
@@ -205,35 +209,85 @@ export function useNexora() {
 
   // ── actions ────────────────────────────────────────────────────────────
   const connect = useCallback(async () => {
-    // Prefer the explicit MetaMask connector; fall back to any injected wallet.
+    // Connector priority (registered in lib/wallet.ts):
+    //   1. injected({ target: "metaMask" })  →  id "metaMask"  (MetaMask extension)
+    //   2. injected()                        →  id "injected"  (Rabby, Coinbase, etc.)
     const mm =
       connectors.find((c) => c.id === "metaMask" || c.name === "MetaMask") ??
-      connectors.find((c) => c.id === "injected" || c.type === "injected");
+      connectors.find((c) => c.id === "injected" || c.type === "injected") ??
+      connectors[0];
+
     if (!mm) {
-      toast.error("No injected wallet found. Install MetaMask or use a browser wallet.");
+      toast.error("No browser wallet found. Install MetaMask and reload the page.");
       return;
     }
+
+    // ── Step 1: connect the wallet ────────────────────────────────────────
     try {
       await connectAsync({ connector: mm });
-      toast.success("Wallet connected.");
-      // Auto-add Monad Testnet to MetaMask right after connecting so the user
-      // lands on the right network without a manual switch step.
+    } catch (err) {
+      // viem throws UserRejectedRequestError with EIP-1193 code 4001.
+      // Check name, code, and message substrings for robustness.
+      const name  = (err as Error)?.name ?? "";
+      const code  = (err as Record<string, unknown>)?.code;
+      const lower = ((err as Error)?.message ?? "").toLowerCase();
+
+      const isRejection =
+        name === "UserRejectedRequestError" ||
+        name === "ConnectorUserRejectedError" ||
+        code === 4001 || code === "4001" ||
+        lower.includes("user rejected") ||
+        lower.includes("rejected") ||
+        lower.includes("denied") ||
+        lower.includes("cancelled") ||
+        lower.includes("canceled");
+
+      const isAlreadyConnected =
+        name === "ConnectorAlreadyConnectedError" ||
+        lower.includes("already connected");
+
+      if (isRejection) {
+        toast.error("Wallet connection was declined.");
+      } else if (isAlreadyConnected) {
+        toast.info("Wallet is already connected.");
+      } else {
+        console.error("[Nexora] wallet connect error:", err);
+        toast.error("Could not connect wallet — make sure MetaMask is unlocked and try again.");
+      }
+      return;
+    }
+
+    toast.success("Wallet connected.");
+
+    // ── Step 2: auto-add Monad Testnet (non-fatal) ────────────────────────
+    // wallet_addEthereumChain already switches the chain on approval.
+    // If the user declines we show a soft hint; the "Switch" button covers it.
+    try {
       const { ensureMonadNetwork } = await import("@/lib/wallet");
       await ensureMonadNetwork();
     } catch {
-      toast.error("Wallet connection was declined.");
+      toast.info("Switch to Monad Testnet to use Nexora.", {
+        description: "Click 'Switch' in the Wallets panel.",
+      });
     }
   }, [connectAsync, connectors]);
 
   const switchToMonad = useCallback(async () => {
     try {
-      // Try adding the chain first (no-op if already added) then switch.
+      // wallet_addEthereumChain already switches the chain when the user
+      // approves adding it. Only call switchChainAsync as a fallback when the
+      // chain is already known to the wallet (ensureMonadNetwork returns false).
       const { ensureMonadNetwork } = await import("@/lib/wallet");
-      await ensureMonadNetwork();
-      await switchChainAsync({ chainId: monadTestnet.id });
+      const added = await ensureMonadNetwork();
+      if (!added) {
+        // Chain was already present — switch explicitly.
+        await switchChainAsync({ chainId: monadTestnet.id });
+      }
       toast.success("Switched to Monad Testnet.");
-    } catch {
-      toast.error("Could not switch the wallet to Monad Testnet.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const isRejected = msg.toLowerCase().includes("rejected") || msg.toLowerCase().includes("denied");
+      toast.error(isRejected ? "Network switch was declined." : "Could not switch the wallet to Monad Testnet.");
     }
   }, [switchChainAsync]);
 
@@ -465,6 +519,20 @@ export function useNexora() {
     }
   }, [jobId, verification, readJob]);
 
+  // ── manual job refresh (for when RPC was slow after tx) ───────────────
+  const refreshJob = useCallback(async () => {
+    if (jobId === null) return;
+    setBusy("refresh");
+    const j = await readJob(jobId);
+    if (j) {
+      setJob(j);
+      toast.info(`Job #${jobId} refreshed — status: ${j.status}`);
+    } else {
+      toast.error("Could not fetch job state. Monad RPC may be slow — try again.");
+    }
+    setBusy(null);
+  }, [jobId, readJob]);
+
   return {
     // health & wallet
     health,
@@ -507,5 +575,6 @@ export function useNexora() {
     submitWork,
     runVerification,
     settle,
+    refreshJob,
   };
 }
