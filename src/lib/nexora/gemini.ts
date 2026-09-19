@@ -33,7 +33,7 @@ const GEMINI_ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/models";
 
 export function geminiModel(): string {
-  return process.env.GEMINI_MODEL?.trim() || "gemini-3.1-flash-lite";
+  return process.env.GEMINI_MODEL?.trim() || "gemini-flash-latest";
 }
 
 export function providerName(): "gemini" | "mock" {
@@ -136,8 +136,12 @@ const responseSchema = {
  * with GEMINI_API_KEY_2 then GEMINI_API_KEY_3 if configured.
  * Each key gets one attempt; the last failure error is returned if all fail.
  */
-async function callGeminiWithKey(req: VerifyRequest, apiKey: string): Promise<ProviderResult> {
-  const model = geminiModel();
+async function callGeminiWithKey(
+  req: VerifyRequest,
+  apiKey: string,
+  modelOverride?: string,
+): Promise<ProviderResult> {
+  const model = modelOverride || geminiModel();
   const url = `${GEMINI_ENDPOINT}/${model}:generateContent?key=${apiKey}`;
 
   const controller = new AbortController();
@@ -160,6 +164,17 @@ async function callGeminiWithKey(req: VerifyRequest, apiKey: string): Promise<Pr
     });
 
     if (!res.ok) {
+      // If 404 or 503 and we haven't overridden the model yet, try robust fallbacks
+      if ((res.status === 404 || res.status === 503) && !modelOverride) {
+        const fallbacks = ["gemini-flash-latest", "gemini-2.5-flash"];
+        for (const fb of fallbacks) {
+          if (fb === model) continue;
+          console.warn(`[gemini] ${model} returned ${res.status}, trying fallback model ${fb}...`);
+          const fbResult = await callGeminiWithKey(req, apiKey, fb);
+          if (fbResult.ok) return fbResult;
+        }
+      }
+
       const body = await res.text().catch(() => "");
       const cat =
         res.status === 429
@@ -169,7 +184,6 @@ async function callGeminiWithKey(req: VerifyRequest, apiKey: string): Promise<Pr
             : res.status === 404
               ? "AI_PROVIDER_MODEL_NOT_FOUND"
               : "AI_PROVIDER_ERROR";
-      // log status only — never the body (it could echo the key back)
       console.error(
         JSON.stringify({ event: "gemini.http_error", status: res.status, bodyPreview: body.slice(0, 200) }),
       );
