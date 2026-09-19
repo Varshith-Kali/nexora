@@ -44,17 +44,12 @@
 
 ---
 
-### 💡 Get Monad Testnet MON (Free)
+### 💡 Add Monad Testnet to MetaMask
 
-The buyer wallet needs MON to fund jobs.
-
-1. Go to **[https://faucet.monad.xyz](https://faucet.monad.xyz)**
-2. Connect your wallet and claim free testnet MON
-3. Add Monad Testnet to MetaMask:
-   - Network: `Monad Testnet`
-   - RPC: `https://testnet-rpc.monad.xyz`
-   - Chain ID: `10143`
-   - Symbol: `MON`
+- Network: `Monad Testnet`
+- RPC: `https://testnet-rpc.monad.xyz`
+- Chain ID: `10143`
+- Symbol: `MON`
 
 ---
 
